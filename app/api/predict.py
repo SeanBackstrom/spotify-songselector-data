@@ -11,7 +11,7 @@ router = APIRouter()
 # parse JSON from favorite songs
 class Itemfav(BaseModel):
     """Use this data model to send the request body correctly,
-     so data is received back (in JSON) based on the songs the selected."""
+     so data is received back (in JSON) based on the songs they selected."""
 
     songs: list = Field(example=["song id", "song id 2", "song id etc"])
 
