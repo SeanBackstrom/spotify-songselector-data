@@ -40,6 +40,6 @@ async def viz(statecode: str):
     # Make Plotly figure
     statename = statecodes[statecode]
     fig = px.line(df, x='Date', y='Percent', title=f'{statename} Unemployment Rate')
-    songids = ["adfgasdfasd", "aADFWEAFSD", "HSTRTSDFG"]
+
     # Return Plotly figure as JSON string
-    return songids
+    return fig.to_json()

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 import pandas as pd
 from pydantic import BaseModel, Field
 from collections import Counter
+import numpy as np
 
 log = logging.getLogger(__name__)
 router = APIRouter()
@@ -44,11 +45,101 @@ async def predictfav(item: Itemfav):
         for suggestion in song_ids_fav:
             allpredlist.append(suggestion)
 
+    # Graph
+    gdrive_file_id = '1grunsDCYl4Ro67EuDiFfcWXMBoAhrY6J'
+    df = pd.read_csv(f'https://docs.google.com/uc?id={gdrive_file_id}&export=download', encoding='ISO-8859-1',index_col=0)
 
-    # item.songs is my list of songs
-    # TODO: populate song ID's with real ID's
+    df['tempo'] = df['tempo'] * 0.001
 
-    return allpredlist
+    #---------
+    track_id = '52V5lBmgcqEZCtHjXtJHk9'
+
+    ogtrack = df[df['track_id'].str.match(track_id)]
+    sug1track = df[df['track_id'].str.match(ogtrack['suggested_id_1'].iloc[0])]
+    sug2track = df[df['track_id'].str.match(ogtrack['suggested_id_2'].iloc[0])]
+    sug3track = df[df['track_id'].str.match(ogtrack['suggested_id_3'].iloc[0])]
+    sug4track = df[df['track_id'].str.match(ogtrack['suggested_id_4'].iloc[0])]
+    sug5track = df[df['track_id'].str.match(ogtrack['suggested_id_5'].iloc[0])]
+
+    #--------------
+
+    import plotly.graph_objects as go
+    labels = [ogtrack.iloc[-1]['track_name'], sug1track.iloc[-1]['track_name'], sug2track.iloc[-1]['track_name'], sug3track.iloc[-1]['track_name'],sug4track.iloc[-1]['track_name'], sug5track.iloc[-1]['track_name']]
+    colors = ['#d62728','#1f77b4', '#e377c2', '#17becf',
+            'rgb(115,115,115)', '#2ca02c']
+    xlabels = ['Accousticness', 'Danceability', 'Energy',
+                'Instrumentalness', 'Liveness', 'Speechiness',
+                'Tempo', 'Valence']
+    line_size = [3, 1, 1, 1, 1, 1]
+    x_data = np.array([['Accousticness', 'Danceability', 'Energy',
+                'Instrumentalness', 'Liveness', 'Speechiness',
+                'Tempo', 'Valence']])
+    y_data = np.array([
+                    [ogtrack.iloc[-1]['acousticness'], ogtrack.iloc[-1]['danceability'], ogtrack.iloc[-1]['energy'], ogtrack.iloc[-1]['instrumentalness'], ogtrack.iloc[-1]['liveness'], ogtrack.iloc[-1]['speechiness'], ogtrack.iloc[-1]['tempo'], ogtrack.iloc[-1]['valence']],
+                    [sug1track.iloc[-1]['acousticness'], sug1track.iloc[-1]['danceability'], sug1track.iloc[-1]['energy'], sug1track.iloc[-1]['instrumentalness'], sug1track.iloc[-1]['liveness'], sug1track.iloc[-1]['speechiness'], sug1track.iloc[-1]['tempo'], sug1track.iloc[-1]['valence']],
+                    [sug2track.iloc[-1]['acousticness'], sug2track.iloc[-1]['danceability'], sug2track.iloc[-1]['energy'], sug2track.iloc[-1]['instrumentalness'], sug2track.iloc[-1]['liveness'], sug2track.iloc[-1]['speechiness'], sug2track.iloc[-1]['tempo'], sug2track.iloc[-1]['valence']],
+                    [sug3track.iloc[-1]['acousticness'], sug3track.iloc[-1]['danceability'], sug3track.iloc[-1]['energy'], sug3track.iloc[-1]['instrumentalness'], sug3track.iloc[-1]['liveness'], sug3track.iloc[-1]['speechiness'], sug3track.iloc[-1]['tempo'], sug3track.iloc[-1]['valence']],
+                    [sug4track.iloc[-1]['acousticness'], sug4track.iloc[-1]['danceability'], sug4track.iloc[-1]['energy'], sug4track.iloc[-1]['instrumentalness'], sug4track.iloc[-1]['liveness'], sug4track.iloc[-1]['speechiness'], sug4track.iloc[-1]['tempo'], sug4track.iloc[-1]['valence']],
+                    [sug5track.iloc[-1]['acousticness'], sug5track.iloc[-1]['danceability'], sug5track.iloc[-1]['energy'], sug5track.iloc[-1]['instrumentalness'], sug5track.iloc[-1]['liveness'], sug5track.iloc[-1]['speechiness'], sug5track.iloc[-1]['tempo'], sug5track.iloc[-1]['valence']]
+    ])
+    fig = go.Figure()
+    for i in range(0, 6):
+        fig.add_trace(go.Scatter(x=x_data[0], y=y_data[i], mode='lines',
+            name=labels[i],
+            line=dict(color=colors[i], width=line_size[i]),
+            connectgaps=True,
+        ))
+    fig.update_layout(
+        xaxis=dict(
+            ticktext=xlabels,
+            showline=True,
+            showgrid=True,
+            showticklabels=True,
+            linecolor='rgb(204, 204, 204)',
+            linewidth=2,
+            ticks='outside',
+            tickfont=dict(
+                family='Arial',
+                size=12,
+                color='black',
+            ),
+        ),
+        yaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            showline=False,
+            showticklabels=False),
+        autosize=False,
+        margin=dict(
+            autoexpand=False,
+            l=100,
+            r=20,
+            t=110,
+        ),
+        showlegend=True,
+        plot_bgcolor='white',
+        legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=.9,
+        xanchor="right",
+        x=1.05)
+    )
+    annotations = []
+    # Title
+    annotations.append(dict(xref='paper', yref='paper', x=0.0, y=1.2,
+                                xanchor='left', yanchor='bottom',
+                                text='Song & Suggestions',
+                                font=dict(family='Cursive',
+                                            size=24,
+                                            color='rgb(82, 82, 82)'),
+                                showarrow=False))
+    fig.update_layout(annotations=annotations)
+    figtext =fig.to_json()
+
+    figlist = []
+    figlist.append(figtext)
+    return allpredlist, figlist
 
 
 # parse JSON from mood
@@ -85,9 +176,12 @@ async def predictmood(item: Itemmood):
     df2.columns = ['track_id', 'suggested_id_1', 'suggested_id_2', 'suggested_id_3',
         'suggested_id_4', 'suggested_id_5', 'danceability', 'liveness', 'valence',
         'energy', 'tempo', 'speechiness', 'instrument', 'acousticness']
+
     post_return = item.moods
+
     df2 = df2.drop(labels=['suggested_id_1', 'suggested_id_2', 'suggested_id_3',
        'suggested_id_4', 'suggested_id_5', 'instrument'], axis=1)
+
     # Make data even with json requests
     df2['danceability'] = df2['danceability'].str.lower()
     df2["danceability"]= df2["danceability"].replace("med", "medium") 
@@ -109,7 +203,7 @@ async def predictmood(item: Itemmood):
     values = []
     all_mood_names = ['danceability','liveness','valence','energy','tempo','speechiness','acousticness']
     for i in range(0, len(post_return)):
-        
+
         mood = post_return[i]['mood']
         value = post_return[i]['value']
 
