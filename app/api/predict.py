@@ -32,7 +32,7 @@ class Itemfav(BaseModel):
 # send back predictions from favorite songs
 @router.post('/predictfav')
 async def predictfav(item: Itemfav):
-    """(CURRENTLY IN TEST MODE) Make song predictions from favorite songs
+    """Make song predictions from favorite songs
      and return Song ID's in an array"""
 
     df = pd.read_csv("https://raw.githubusercontent.com/BW-Spotify-Song-Suggester-3/ds/master/large_song_data.csv", index_col=0)
@@ -78,7 +78,7 @@ class Itemmood(BaseModel):
 # send back predictions for mood
 @router.post('/predictmood')
 async def predictmood(item: Itemmood):
-    """(CURRENTLY IN TEST MODE) Make song predictions from mood
+    """Make song predictions from mood
      and return Song ID's in an array"""
 
     df2 = pd.read_csv("https://raw.githubusercontent.com/BW-Spotify-Song-Suggester-3/ds/master/large_song_data.csv", index_col=0)
